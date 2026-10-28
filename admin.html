@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Heart of Worship Attendance</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;background:#14070b;color:#f7efe3;margin:0;padding:20px}main{max-width:900px;margin:auto}h1{color:#f0b73a;font-weight:600}input,button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid #4a2530;background:#220b12;color:inherit}button{background:#f0b73a;color:#2a0f06;font-weight:700;border:0;cursor:pointer}.row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.row input{flex:1;min-width:180px}.stats{display:flex;gap:14px}.stats div{background:#2a0f17;padding:12px 18px;border-radius:10px}.stats b{display:block;font-size:28px;color:#ffe29a}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{padding:9px 6px;border-bottom:1px solid #4a2530;text-align:left;font-size:15px}.ok{color:#8fe3a0}#msg{min-height:24px;color:#ff9c8c}</style></head><body><main>
+<h1>Attendance</h1>
+<div class="row"><input id="key" type="password" placeholder="Admin key"><button id="load">Load</button></div>
+<p id="msg"></p>
+<div class="stats"><div><b id="tot">0</b>Registered</div><div><b id="ci">0</b>Checked in</div></div>
+<div class="row"><input id="q" placeholder="Search name or ticket ID"><button id="csv">Export CSV</button></div>
+<table><thead><tr><th>Ticket</th><th>Name</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table>
+</main><script>
+var $=function(i){return document.getElementById(i)},rows=[];
+function api(m,b){return fetch('/api/attendees',{method:m,headers:{Authorization:'Bearer '+$('key').value,'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error);return j})})}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function render(){var q=$('q').value.toLowerCase();$('tb').innerHTML=rows.filter(function(r){return(r.name+r.ticket_id).toLowerCase().indexOf(q)>-1}).map(function(r){return'<tr><td>'+esc(r.ticket_id)+'</td><td>'+esc(r.name)+'</td><td>'+(r.checked_in_at?'<span class="ok">Checked in</span>':'<button data-id="'+esc(r.ticket_id)+'">Check in</button>')+'</td></tr>'}).join('');$('tot').textContent=rows.length;$('ci').textContent=rows.filter(function(r){return r.checked_in_at}).length}
+function load(){$('msg').textContent='';api('GET').then(function(j){rows=j.rows;render()}).catch(function(e){$('msg').textContent=e.message})}
+$('load').onclick=load;$('q').oninput=render;
+$('tb').onclick=function(e){var id=e.target.getAttribute('data-id');if(id)api('POST',{ticket_id:id}).then(load).catch(function(x){$('msg').textContent=x.message})};
+$('csv').onclick=function(){var c='ticket_id,name,registered,checked_in\n'+rows.map(function(r){return[r.ticket_id,'"'+r.name.replace(/"/g,'""')+'"',r.created_at,r.checked_in_at||''].join(',')}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download='attendance.csv';a.click()};
+</script></body></html>
