@@ -5,18 +5,17 @@
 In Vercel, open **Project → Settings → Environment Variables** and configure:
 
 - `DATABASE_URL`: the connection string from your Neon PostgreSQL project.
-- `ADMIN_KEY`: a long, random initial admin password and session-signing secret. Use at least 16 characters; 32 or more random characters is recommended.
+- `ADMIN_KEY`: the existing admin password/secret used to sign admin sessions. Keep the same value you previously configured in Vercel. It must be at least 16 characters.
 
 Apply the variables to the environments you deploy (Production and Preview as appropriate), then redeploy. A local `.env` file is not automatically uploaded to Vercel. Never commit real credentials.
 
-## Sign in and set a custom password
+## Admin sign-in
 
 1. Open `/admin` on the deployed site.
-2. Sign in using the value configured as `ADMIN_KEY`.
-3. In **Change admin password**, enter the current password and a new password of at least 12 characters, then confirm it.
-4. After saving, use the new custom password for future logins. The database stores a salted scrypt password hash, not the plain-text password. Keep `ADMIN_KEY` configured because it signs the admin session cookie.
+2. Sign in using the value of `ADMIN_KEY` configured in Vercel.
+3. There is no custom-password feature. To change the admin password, update `ADMIN_KEY` in Vercel and redeploy.
 
-If the database has no saved custom password yet, `ADMIN_KEY` remains the initial login password. If the custom password is forgotten, an operator with deployment access can remove the single row from the `admin_credentials` table in Neon; the initial `ADMIN_KEY` will then work again. Do this only after verifying database access and authorisation.
+Admin login now verifies `ADMIN_KEY` directly and does not query Neon. This means a temporary database connection issue will no longer prevent the operator from signing in; attendee data still requires a working `DATABASE_URL`.
 
 ## Check-in workflow
 
@@ -26,3 +25,7 @@ If the database has no saved custom password yet, `ADMIN_KEY` remains the initia
 - The attendee table can also be used to check in a row directly. Export CSV to download the attendance list.
 
 The API requires a signed, HTTP-only session cookie. Attendee data and check-in endpoints reject requests without a valid session. Sessions expire after eight hours; sign out when leaving a shared device.
+
+## If attendee data still fails
+
+If sign-in succeeds but attendee data does not load, check Vercel **Project → Settings → Environment Variables** for `DATABASE_URL`, verify the Neon connection string and database availability, and redeploy after changing variables. Inspect the Vercel Function logs for the specific database error.
