@@ -5,7 +5,7 @@
 In Vercel, open **Project → Settings → Environment Variables** and configure:
 
 - `DATABASE_URL`: the connection string from your Neon PostgreSQL project.
-- `ADMIN_KEY`: the existing admin password/secret used to sign admin sessions. Keep the same value you previously configured in Vercel. It must be at least 16 characters.
+- `ADMIN_KEY`: the existing admin password/secret used to sign admin sessions. Keep the same value you previously configured in Vercel; no password reset is required. For future changes, use a long random secret.
 
 Apply the variables to the environments you deploy (Production and Preview as appropriate), then redeploy. A local `.env` file is not automatically uploaded to Vercel. Never commit real credentials.
 
