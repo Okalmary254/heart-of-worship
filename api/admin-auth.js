@@ -26,6 +26,10 @@ export default async function handler(req, res) {
   try {
     const action = String(body.action || '');
 
+    if (action === 'session-check') {
+      return res.status(200).json({ authenticated: hasValidSession(req) });
+    }
+
     if (action === 'logout') {
       clearSessionCookie(res);
       return res.status(200).json({ ok: true });
