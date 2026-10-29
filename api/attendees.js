@@ -1,4 +1,4 @@
-import { getDatabase, sendServerError } from './_lib/db.js';
+import { getDatabase, sendServerError } from '../lib/db.js';
 
 export default async function handler(req, res) {
   if (!process.env.ADMIN_KEY) {
