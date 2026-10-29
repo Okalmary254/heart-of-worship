@@ -1,4 +1,4 @@
-import { getDatabase, sendServerError } from './_lib/db.js';
+import { getDatabase, sendServerError } from '../lib/db.js';
 
 const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const makeTicketId = () => 'HOW-' + Array.from(
