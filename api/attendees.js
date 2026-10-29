@@ -27,20 +27,27 @@ export default async function handler(req, res) {
       }
 
       const result = await sql`
-        UPDATE registrations
-        SET checked_in_at = COALESCE(checked_in_at, NOW())
-        WHERE ticket_id = ${ticketId}
-        RETURNING ticket_id, name, checked_in_at
+        WITH current_ticket AS (
+          SELECT ticket_id, checked_in_at IS NOT NULL AS was_checked_in
+          FROM registrations
+          WHERE ticket_id = ${ticketId}
+        ), updated AS (
+          UPDATE registrations
+          SET checked_in_at = COALESCE(checked_in_at, NOW())
+          WHERE ticket_id = ${ticketId}
+          RETURNING ticket_id, name, checked_in_at
+        )
+        SELECT updated.ticket_id, updated.name, updated.checked_in_at,
+               current_ticket.was_checked_in AS already_checked_in
+        FROM updated
+        JOIN current_ticket USING (ticket_id)
       `;
 
       if (!result.length) {
         return res.status(404).json({ error: 'Ticket not found. Check the number and try again.' });
       }
 
-      return res.status(200).json({
-        ...result[0],
-        already_checked_in: Boolean(result[0].checked_in_at && new Date(result[0].checked_in_at).getTime() < Date.now() - 1000)
-      });
+      return res.status(200).json(result[0]);
     }
 
     const rows = await sql`
