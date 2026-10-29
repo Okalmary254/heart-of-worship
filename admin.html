@@ -1,18 +1,52 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Heart of Worship Attendance</title>
-<style>body{font:16px/1.5 system-ui,sans-serif;background:#14070b;color:#f7efe3;margin:0;padding:20px}main{max-width:900px;margin:auto}h1{color:#f0b73a;font-weight:600}input,button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid #4a2530;background:#220b12;color:inherit}button{background:#f0b73a;color:#2a0f06;font-weight:700;border:0;cursor:pointer}.row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.row input{flex:1;min-width:180px}.stats{display:flex;gap:14px}.stats div{background:#2a0f17;padding:12px 18px;border-radius:10px}.stats b{display:block;font-size:28px;color:#ffe29a}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{padding:9px 6px;border-bottom:1px solid #4a2530;text-align:left;font-size:15px}.ok{color:#8fe3a0}#msg{min-height:24px;color:#ff9c8c}</style></head><body><main>
-<h1>Attendance</h1>
-<div class="row"><input id="key" type="password" placeholder="Admin key"><button id="load">Load</button></div>
-<p id="msg"></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Heart of Worship | Admin Attendance</title>
+<style>
+:root{color-scheme:dark;--bg:#14070b;--panel:#220b12;--line:#4a2530;--gold:#f0b73a;--text:#f7efe3;--muted:#c7b6b5;--red:#ff9c8c;--green:#8fe3a0}
+*{box-sizing:border-box}body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:24px}main{max-width:960px;margin:0 auto}h1,h2{color:var(--gold);font-weight:650}h1{margin:0 0 6px}h2{font-size:1.1rem;margin:0 0 10px}.sub{color:var(--muted);margin-top:0}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}.row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.row input{flex:1;min-width:180px}input,button{font:inherit;padding:11px 12px;border-radius:8px;border:1px solid var(--line);background:#18070c;color:var(--text);width:auto;max-width:100%}input:focus{outline:2px solid var(--gold);outline-offset:1px}button{background:var(--gold);color:#2a0f06;font-weight:700;border:0;cursor:pointer}button.secondary{background:#3a1822;color:var(--text);border:1px solid var(--line)}button:disabled{opacity:.55;cursor:wait}.stats{display:flex;gap:12px;flex-wrap:wrap}.stats div{background:#2a0f17;padding:12px 18px;border-radius:10px;min-width:130px}.stats b{display:block;font-size:28px;color:#ffe29a}.message{min-height:24px;color:var(--red);white-space:pre-wrap}.message.success{color:var(--green)}.hidden{display:none!important}.ticket-result{padding:12px;border:1px solid var(--line);border-radius:10px;margin-top:10px}.ticket-result strong{color:var(--gold)}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{padding:10px 7px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}th{color:var(--muted)}.ok{color:var(--green)}.table-wrap{overflow-x:auto}.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.small{font-size:13px;color:var(--muted)}@media(max-width:600px){body{padding:14px}.panel{padding:14px}td,th{padding:8px 5px}}
+</style>
+</head>
+<body><main>
+<section id="login-panel" class="panel">
+<h1>Admin sign in</h1><p class="sub">Heart of Worship attendance dashboard. Sign in with the initial admin password configured by the site administrator.</p>
+<form id="login-form"><label for="login-password">Admin password</label><div class="row"><input id="login-password" type="password" autocomplete="current-password" placeholder="Enter admin password" required><button id="login-btn" type="submit">Sign in</button></div></form>
+<p id="login-msg" class="message" role="status"></p>
+</section>
+<section id="dashboard" class="hidden">
+<div class="topbar"><div><h1>Attendance dashboard</h1><p class="sub">Search registrations, check in ticket holders, and export attendance.</p></div><button id="logout" class="secondary" type="button">Sign out</button></div>
 <div class="stats"><div><b id="tot">0</b>Registered</div><div><b id="ci">0</b>Checked in</div></div>
-<div class="row"><input id="q" placeholder="Search name or ticket ID"><button id="csv">Export CSV</button></div>
-<table><thead><tr><th>Ticket</th><th>Name</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table>
-</main><script>
-var $=function(i){return document.getElementById(i)},rows=[];
-function api(m,b){return fetch('/api/attendees',{method:m,headers:{Authorization:'Bearer '+$('key').value,'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error);return j})})}
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function render(){var q=$('q').value.toLowerCase();$('tb').innerHTML=rows.filter(function(r){return(r.name+r.ticket_id).toLowerCase().indexOf(q)>-1}).map(function(r){return'<tr><td>'+esc(r.ticket_id)+'</td><td>'+esc(r.name)+'</td><td>'+(r.checked_in_at?'<span class="ok">Checked in</span>':'<button data-id="'+esc(r.ticket_id)+'">Check in</button>')+'</td></tr>'}).join('');$('tot').textContent=rows.length;$('ci').textContent=rows.filter(function(r){return r.checked_in_at}).length}
-function load(){$('msg').textContent='';api('GET').then(function(j){rows=j.rows;render()}).catch(function(e){$('msg').textContent=e.message})}
-$('load').onclick=load;$('q').oninput=render;
-$('tb').onclick=function(e){var id=e.target.getAttribute('data-id');if(id)api('POST',{ticket_id:id}).then(load).catch(function(x){$('msg').textContent=x.message})};
-$('csv').onclick=function(){var c='ticket_id,name,registered,checked_in\n'+rows.map(function(r){return[r.ticket_id,'"'+r.name.replace(/"/g,'""')+'"',r.created_at,r.checked_in_at||''].join(',')}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download='attendance.csv';a.click()};
-</script></body></html>
+<section class="panel"><h2>Check in by ticket number</h2><p class="sub">Enter the attendee's ticket number (for example, HOW-ABCDE), verify the attendee name, then confirm check-in.</p>
+<form id="ticket-form"><div class="row"><input id="ticket" autocomplete="off" autocapitalize="characters" placeholder="HOW-XXXXX" aria-label="Ticket number" required><button id="find-ticket" type="submit">Find ticket</button></div></form>
+<div id="ticket-result" class="ticket-result hidden" aria-live="polite"></div><p id="ticket-msg" class="message" role="status"></p>
+</section>
+<section class="panel"><div class="topbar"><h2>Registered attendees</h2><button id="csv" class="secondary" type="button">Export CSV</button></div>
+<div class="row"><input id="q" placeholder="Search name or ticket ID" aria-label="Search attendees"><button id="refresh" class="secondary" type="button">Refresh</button></div>
+<p id="dashboard-msg" class="message" role="status"></p>
+<div class="table-wrap"><table><thead><tr><th>Ticket</th><th>Name</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table></div>
+</section>
+<section class="panel"><h2>Change admin password</h2><p class="sub">Use your current password to set a custom password. Passwords must be at least 12 characters. Your new password is stored as a salted hash.</p>
+<form id="password-form"><div class="row"><input id="current-password" type="password" autocomplete="current-password" placeholder="Current password" required><input id="new-password" type="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="New password (12+ characters)" required></div><div class="row"><input id="confirm-password" type="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="Confirm new password" required><button id="change-password" type="submit">Update password</button></div></form><p id="password-msg" class="message" role="status"></p>
+</section>
+</section>
+<script>
+var $=function(id){return document.getElementById(id)},rows=[],selectedTicket=null;
+async function request(url,options){var response=await fetch(url,Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},options||{}));var data=await response.json().catch(function(){return{error:'Unexpected server response.'}});if(!response.ok)throw new Error(data.error||'Request failed.');return data}
+function showDashboard(){ $('login-panel').classList.add('hidden');$('dashboard').classList.remove('hidden');load() }
+function showLogin(){ $('dashboard').classList.add('hidden');$('login-panel').classList.remove('hidden');$('login-password').focus() }
+function setMessage(id,message,success){$(id).textContent=message||'';$(id).classList.toggle('success',Boolean(success))}
+function esc(value){return String(value==null?'':value).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+async function api(method,body){return request('/api/attendees',{method:method,body:body?JSON.stringify(body):undefined})}
+function render(){var query=$('q').value.trim().toLowerCase();var visible=rows.filter(function(r){return (String(r.name)+' '+String(r.ticket_id)).toLowerCase().includes(query)});$('tb').innerHTML=visible.map(function(r){return '<tr><td>'+esc(r.ticket_id)+'</td><td>'+esc(r.name)+'</td><td>'+(r.checked_in_at?'<span class="ok">Checked in</span>':'<button type="button" data-id="'+esc(r.ticket_id)+'">Check in</button>')+'</td></tr>'}).join('');$('tot').textContent=rows.length;$('ci').textContent=rows.filter(function(r){return r.checked_in_at}).length}
+async function load(){setMessage('dashboard-msg','');try{var data=await api('GET');rows=data.rows||[];render()}catch(error){if(error.message.toLowerCase().includes('sign in')){showLogin()}setMessage('dashboard-msg',error.message)}}
+async function checkIn(ticketId){setMessage('ticket-msg','');try{var result=await api('POST',{ticket_id:ticketId});setMessage('ticket-msg',result.already_checked_in?'This ticket was already checked in.':'Check-in successful.',true);$('ticket-result').classList.remove('hidden');$('ticket-result').innerHTML='<strong>'+esc(result.ticket_id)+'</strong> · '+esc(result.name)+'<p class="ok">'+(result.already_checked_in?'Already checked in':'Marked as checked in')+'</p>';selectedTicket=null;await load()}catch(error){setMessage('ticket-msg',error.message)}}
+$('login-form').addEventListener('submit',async function(event){event.preventDefault();var button=$('login-btn');button.disabled=true;setMessage('login-msg','');try{await request('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'login',password:$('login-password').value})});$('login-password').value='';showDashboard()}catch(error){setMessage('login-msg',error.message)}finally{button.disabled=false}});
+$('logout').onclick=async function(){try{await request('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'logout'})})}finally{rows=[];showLogin();setMessage('login-msg','You have signed out.',true)}};
+$('refresh').onclick=load;$('q').oninput=render;
+$('tb').onclick=function(event){var id=event.target.getAttribute('data-id');if(id)checkIn(id)};
+$('ticket-form').addEventListener('submit',async function(event){event.preventDefault();var id=$('ticket').value.trim().toUpperCase();setMessage('ticket-msg','');$('ticket-result').classList.add('hidden');if(!/^HOW-[A-Z0-9]{5,6}$/.test(id)){setMessage('ticket-msg','Enter a ticket in the format HOW-XXXXX.');return}try{var result=await api('GET');rows=result.rows||[];var attendee=rows.find(function(r){return String(r.ticket_id).toUpperCase()===id});render();if(!attendee){setMessage('ticket-msg','Ticket not found. Check the number and try again.');return}$('ticket-result').classList.remove('hidden');selectedTicket=id;$('ticket-result').innerHTML='<p>Ticket: <strong>'+esc(attendee.ticket_id)+'</strong></p><p>Attendee: <strong>'+esc(attendee.name)+'</strong></p><p>Status: '+(attendee.checked_in_at?'<span class="ok">Already checked in</span>':'Not checked in')+'</p>'+(attendee.checked_in_at?'':'<button id="confirm-checkin" type="button">Confirm check-in</button>');if(!attendee.checked_in_at)$('confirm-checkin').onclick=function(){checkIn(id)};}catch(error){setMessage('ticket-msg',error.message)}});
+$('password-form').addEventListener('submit',async function(event){event.preventDefault();setMessage('password-msg','');var current=$('current-password').value,newPassword=$('new-password').value;if(newPassword!==$('confirm-password').value){setMessage('password-msg','The new passwords do not match.');return}var button=$('change-password');button.disabled=true;try{var result=await request('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'change-password',currentPassword:current,newPassword:newPassword})});$('current-password').value='';$('new-password').value='';$('confirm-password').value='';setMessage('password-msg',result.message||'Password updated.',true)}catch(error){setMessage('password-msg',error.message)}finally{button.disabled=false}});
+$('csv').onclick=function(){var csv='ticket_id,name,registered,checked_in\n'+rows.map(function(r){return[r.ticket_id,'"'+String(r.name||'').replace(/"/g,'""')+'"',r.created_at||'',r.checked_in_at||''].join(',')}).join('\n');var link=document.createElement('a');link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));link.download='attendance.csv';link.click();URL.revokeObjectURL(link.href)};
+request('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'session-check'})}).then(function(session){if(session.authenticated)showDashboard();else showLogin()}).catch(function(){showLogin()});
+</script></main></body></html>
